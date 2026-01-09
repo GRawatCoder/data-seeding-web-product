@@ -1,35 +1,33 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useEffect, useState } from 'react'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [theme, setTheme] = useState('light')
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <div className="app-shell min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex justify-between items-center">
+        <h1 className="text-lg font-semibold">
+          Data Seeding Admin
+        </h1>
+
+        <button
+          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+          className="px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-800 text-sm"
+        >
+          {theme === 'light' ? 'Dark' : 'Light'}
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
+      </header>
+
+      <main className="p-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Admin Sandbox Setup will appear here.
         </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+      </main>
+    </div>
   )
 }
-
-export default App
