@@ -2,6 +2,13 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchSandboxes, createSandbox, deleteSandbox } from '../services/sandboxApi'
 import { motion } from 'framer-motion'
+import {
+  Link2,
+  CheckCircle2,
+  Trash2,
+  Loader2,
+} from 'lucide-react'
+
 
 export default function AdminSandboxes() {
   const queryClient = useQueryClient()
@@ -97,13 +104,7 @@ export default function AdminSandboxes() {
           <p className="md:col-span-3 text-red-500 text-sm">
             {mutation.error.message}
           </p>
-        )}
-
-        {mutation.isSuccess && (
-          <p className="md:col-span-3 text-green-500 text-sm">
-            Sandbox added successfully
-          </p>
-        )}
+        )}        
       </motion.form>
 
       {/* Sandbox List */}
@@ -130,42 +131,64 @@ export default function AdminSandboxes() {
 
             {/* Right: Status + Action */}
             <div className="flex items-center gap-3">
-              <span
+              <motion.span
+                key={sb.status}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
                 className={`text-xs px-2 py-1 rounded
-      ${
-        sb.status === "CONNECTED"
-          ? "bg-green-100 text-green-700"
-          : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-      }`}
+    ${
+      sb.status === "CONNECTED"
+        ? "bg-green-100 text-green-700"
+        : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+    }`}
               >
                 {sb.status}
-              </span>
+              </motion.span>
 
               {sb.status !== "CONNECTED" ? (
                 <a
                   href={`http://localhost:4000/oauth/login?sandboxId=${sb.id}`}
                   className="px-3 py-1.5 rounded-md text-sm font-medium
-                 bg-blue-600 text-white
-                 hover:bg-blue-700 transition"
+               bg-blue-600 text-white
+               hover:bg-blue-700 transition
+               flex items-center gap-1"
                 >
+                  <Link2 size={14} />
                   Connect
                 </a>
               ) : (
                 <button
                   disabled
                   className="px-3 py-1.5 rounded-md text-sm font-medium
-                 bg-gray-300 text-gray-500 cursor-not-allowed"
+               bg-green-100 text-green-700
+               cursor-not-allowed
+               flex items-center gap-1"
                 >
+                  <CheckCircle2 size={14} />
                   Connected
                 </button>
               )}
 
               <button
-                onClick={() => deleteMutation.mutate(sb.id)}
-                className="px-2 py-1 text-sm rounded-md
-               bg-red-100 text-red-700
-               hover:bg-red-200 transition"
+                disabled={deleteMutation.isLoading}
+                onClick={() => {
+                  const ok = window.confirm(`Delete sandbox "${sb.name}"?`);
+                  if (ok) deleteMutation.mutate(sb.id);
+                }}
+                className={`px-2 py-1 rounded-md text-sm
+    flex items-center gap-1
+    ${
+      deleteMutation.isLoading
+        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+        : "bg-red-100 text-red-700 hover:bg-red-200"
+    }`}
               >
+                {deleteMutation.isLoading ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Trash2 size={14} />
+                )}
                 Delete
               </button>
             </div>
