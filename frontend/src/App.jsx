@@ -4,6 +4,9 @@ import AdminSandboxes from './pages/AdminSandboxes'
 
 export default function App() {
   const [theme, setTheme] = useState('light')
+  const params = new URLSearchParams(window.location.search)
+  const isConnected = params.get('connected') === 'true'
+
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -21,6 +24,11 @@ export default function App() {
           {theme === "light" ? "Dark" : "Light"}
         </button>
       </header>
+      {isConnected && (
+        <div className="mb-4 p-3 rounded bg-green-100 text-green-800">
+          Salesforce connected successfully
+        </div>
+      )}
 
       <main className="p-6">
         <AdminSandboxes />

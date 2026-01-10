@@ -83,7 +83,7 @@ export default function AdminSandboxes() {
           disabled={mutation.isLoading}
           className="md:col-span-3 bg-black dark:bg-white text-white dark:text-black py-2 rounded-md disabled:opacity-50"
         >
-          {mutation.isLoading ? 'Adding...' : 'Add Sandbox'}
+          {mutation.isLoading ? "Adding..." : "Add Sandbox"}
         </button>
 
         {mutation.isError && (
@@ -103,13 +103,17 @@ export default function AdminSandboxes() {
       <div className="space-y-3">
         {isLoading && <p>Loading sandboxes...</p>}
 
-        {sandboxes.map(sb => (
+        {sandboxes.map((sb) => (
           <motion.div
             key={sb.id}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex justify-between items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4 rounded-lg"
+            className="flex justify-between items-center
+               bg-white dark:bg-gray-900
+               border border-gray-200 dark:border-gray-800
+               p-4 rounded-lg"
           >
+            {/* Left: Sandbox Info */}
             <div>
               <p className="font-medium">{sb.name}</p>
               <p className="text-xs text-gray-500">
@@ -117,12 +121,33 @@ export default function AdminSandboxes() {
               </p>
             </div>
 
-            <span className="text-xs px-2 py-1 rounded bg-gray-200 dark:bg-gray-700">
-              {sb.status}
-            </span>
+            {/* Right: Status + Action */}
+            <div className="flex items-center gap-3">
+              <span
+                className={`text-xs px-2 py-1 rounded
+          ${
+            sb.status === "CONNECTED"
+              ? "bg-green-100 text-green-700"
+              : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+          }`}
+              >
+                {sb.status}
+              </span>
+
+              {sb.status !== "CONNECTED" && (
+                <a
+                  href={`http://localhost:4000/oauth/login?sandboxId=${sb.id}`}
+                  className="px-3 py-1.5 rounded-md text-sm font-medium
+                     bg-blue-600 text-white
+                     hover:bg-blue-700 transition"
+                >
+                  Connect
+                </a>
+              )}
+            </div>
           </motion.div>
         ))}
       </div>
     </div>
-  )
+  );
 }
