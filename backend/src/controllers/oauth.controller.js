@@ -1,10 +1,55 @@
 import { markSandboxConnected } from '../services/sandbox.store.js'
+import axios from 'axios'
+import crypto from 'crypto'
+
+export function oauthLogin(req, res) {
+  const { sandboxId } = req.query
+
+  if (!sandboxId) {
+    return res.status(400).send('Missing sandboxId')
+  }
+
+  // Encode sandboxId into state
+  const statePayload = {
+    sandboxId,
+    nonce: crypto.randomUUID(),
+  }
+
+  const state = Buffer
+    .from(JSON.stringify(statePayload))
+    .toString('base64')
+
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: process.env.SF_CLIENT_ID,
+    redirect_uri: process.env.SF_REDIRECT_URI,
+    scope: 'api refresh_token',
+    state,
+  })
+
+  const loginUrl =
+    `${process.env.SF_LOGIN_URL}/services/oauth2/authorize?${params}`
+
+  res.redirect(loginUrl)
+}
+
 
 export async function oauthCallback(req, res) {
-  const { code, state, sandboxId } = req.query
+  const { code, state } = req.query
 
-  if (!code || !sandboxId) {
-    return res.status(400).send('Missing authorization code or sandboxId')
+  if (!code || !state) {
+    return res.status(400).send('Missing authorization code or state')
+  }
+
+  let sandboxId
+
+  try {
+    const decoded = JSON.parse(
+      Buffer.from(state, 'base64').toString('utf8')
+    )
+    sandboxId = decoded.sandboxId
+  } catch {
+    return res.status(400).send('Invalid OAuth state')
   }
 
   try {
@@ -20,10 +65,10 @@ export async function oauthCallback(req, res) {
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     )
 
-    // TEMP: still global, will be per-sandbox in Step 2.2
+    // TEMP – still global, will be per-sandbox in Step 2.2
     global.sfAuth = tokenResponse.data
 
-    // ✅ THIS IS THE IMPORTANT PART
+    // ✅ Update correct sandbox
     markSandboxConnected(sandboxId)
 
     res.redirect('http://localhost:5173/')
