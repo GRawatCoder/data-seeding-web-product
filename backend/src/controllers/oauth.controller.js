@@ -1,30 +1,14 @@
-import axios from 'axios'
-import crypto from 'crypto'
-
-export function oauthLogin(req, res) {
-  const state = crypto.randomUUID()
-
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: process.env.SF_CLIENT_ID,
-    redirect_uri: process.env.SF_REDIRECT_URI,
-    scope: 'api refresh_token',
-    state,
-  })
-
-  const loginUrl = `${process.env.SF_LOGIN_URL}/services/oauth2/authorize?${params}`
-  res.redirect(loginUrl)
-}
+import { markSandboxConnected } from '../services/sandbox.store.js'
 
 export async function oauthCallback(req, res) {
-  const { code } = req.query
+  const { code, state, sandboxId } = req.query
 
-  if (!code) {
-    return res.status(400).send('Missing authorization code')
+  if (!code || !sandboxId) {
+    return res.status(400).send('Missing authorization code or sandboxId')
   }
 
   try {
-    const tokenRes = await axios.post(
+    const tokenResponse = await axios.post(
       `${process.env.SF_LOGIN_URL}/services/oauth2/token`,
       new URLSearchParams({
         grant_type: 'authorization_code',
@@ -36,19 +20,13 @@ export async function oauthCallback(req, res) {
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     )
 
-    /**
-     * TEMP (Phase 1)
-     * - Store tokens in memory
-     * - Encrypt refresh token later
-     */
-    global.sfAuth = {
-      accessToken: tokenRes.data.access_token,
-      refreshToken: tokenRes.data.refresh_token,
-      instanceUrl: tokenRes.data.instance_url,
-      issuedAt: new Date().toISOString(),
-    }
+    // TEMP: still global, will be per-sandbox in Step 2.2
+    global.sfAuth = tokenResponse.data
 
-    res.redirect('http://localhost:5173/?connected=true')
+    // ✅ THIS IS THE IMPORTANT PART
+    markSandboxConnected(sandboxId)
+
+    res.redirect('http://localhost:5173/')
   } catch (err) {
     console.error(err.response?.data || err.message)
     res.status(500).send('OAuth token exchange failed')
