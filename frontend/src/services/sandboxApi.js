@@ -6,6 +6,13 @@ export async function fetchSandboxes() {
   return res.json()
 }
 
+export async function deleteSandbox(id) {
+  const res = await fetch(`${API_BASE}/sandboxes/${id}`, {
+    method: 'DELETE',
+  })
+  if (!res.ok) throw new Error('Failed to delete sandbox')
+}
+
 export async function createSandbox(payload) {
   const res = await fetch(`${API_BASE}/sandboxes`, {
     method: 'POST',

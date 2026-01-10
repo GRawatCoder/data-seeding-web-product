@@ -1,7 +1,13 @@
 import { getSandboxes, addSandbox } from '../services/sandbox.store.js'
+import { deleteSandbox } from '../services/sandbox.store.js'
 
 export function listSandboxes(req, res) {
   res.json(getSandboxes())
+}
+
+export function removeSandbox(req, res) {
+  deleteSandbox(req.params.id)
+  res.json({ message: 'Sandbox deleted' })
 }
 
 export function createSandbox(req, res) {

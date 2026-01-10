@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchSandboxes, createSandbox } from '../services/sandboxApi'
+import { fetchSandboxes, createSandbox, deleteSandbox } from '../services/sandboxApi'
 import { motion } from 'framer-motion'
 
 export default function AdminSandboxes() {
@@ -32,6 +32,13 @@ export default function AdminSandboxes() {
     e.preventDefault()
     mutation.mutate(form)
   }
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteSandbox,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["sandboxes"]);
+    },
+  });
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -125,25 +132,42 @@ export default function AdminSandboxes() {
             <div className="flex items-center gap-3">
               <span
                 className={`text-xs px-2 py-1 rounded
-          ${
-            sb.status === "CONNECTED"
-              ? "bg-green-100 text-green-700"
-              : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-          }`}
+      ${
+        sb.status === "CONNECTED"
+          ? "bg-green-100 text-green-700"
+          : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+      }`}
               >
                 {sb.status}
               </span>
 
-              {sb.status !== "CONNECTED" && (
+              {sb.status !== "CONNECTED" ? (
                 <a
                   href={`http://localhost:4000/oauth/login?sandboxId=${sb.id}`}
                   className="px-3 py-1.5 rounded-md text-sm font-medium
-                     bg-blue-600 text-white
-                     hover:bg-blue-700 transition"
+                 bg-blue-600 text-white
+                 hover:bg-blue-700 transition"
                 >
                   Connect
                 </a>
+              ) : (
+                <button
+                  disabled
+                  className="px-3 py-1.5 rounded-md text-sm font-medium
+                 bg-gray-300 text-gray-500 cursor-not-allowed"
+                >
+                  Connected
+                </button>
               )}
+
+              <button
+                onClick={() => deleteMutation.mutate(sb.id)}
+                className="px-2 py-1 text-sm rounded-md
+               bg-red-100 text-red-700
+               hover:bg-red-200 transition"
+              >
+                Delete
+              </button>
             </div>
           </motion.div>
         ))}
