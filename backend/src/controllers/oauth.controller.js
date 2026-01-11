@@ -1,6 +1,9 @@
 import { markSandboxConnected } from '../services/sandbox.store.js'
 import axios from 'axios'
 import crypto from 'crypto'
+import { encrypt } from '../utils/crypto.util.js'
+import { saveSandboxAuth } from '../services/auth.store.js'
+
 
 export function oauthLogin(req, res) {
   const { sandboxId } = req.query
@@ -64,6 +67,16 @@ export async function oauthCallback(req, res) {
       }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     )
+
+    const encryptedRefreshToken = encrypt(tokenResponse.data.refresh_token);
+
+    saveSandboxAuth(sandboxId, {
+      accessToken: tokenResponse.data.access_token,
+      refreshToken: encryptedRefreshToken,
+      instanceUrl: tokenResponse.data.instance_url,
+      issuedAt: new Date().toISOString(),
+    });
+
 
     // TEMP – still global, will be per-sandbox in Step 2.2
     global.sfAuth = tokenResponse.data
