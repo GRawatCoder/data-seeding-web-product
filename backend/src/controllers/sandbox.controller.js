@@ -1,13 +1,9 @@
 import { getSandboxes, addSandbox } from '../services/sandbox.store.js'
 import { deleteSandbox } from '../services/sandbox.store.js'
+import { removeSandboxAuth } from '../services/auth.store.js'
 
 export function listSandboxes(req, res) {
   res.json(getSandboxes())
-}
-
-export function removeSandbox(req, res) {
-  deleteSandbox(req.params.id)
-  res.json({ message: 'Sandbox deleted' })
 }
 
 export function createSandbox(req, res) {
@@ -19,4 +15,13 @@ export function createSandbox(req, res) {
 
   addSandbox({ name, type, loginUrl })
   res.status(201).json({ message: 'Sandbox added successfully' })
+}
+
+export function removeSandbox(req, res) {
+  const { id } = req.params
+
+  deleteSandbox(id)
+  removeSandboxAuth(id)
+
+  res.json({ message: 'Sandbox deleted' })
 }
