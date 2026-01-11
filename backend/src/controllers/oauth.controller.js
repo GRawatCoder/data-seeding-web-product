@@ -79,7 +79,7 @@ export async function oauthCallback(req, res) {
 
 
     // TEMP – still global, will be per-sandbox in Step 2.2
-    global.sfAuth = tokenResponse.data
+    //global.sfAuth = tokenResponse.data
 
     // ✅ Update correct sandbox
     markSandboxConnected(sandboxId)

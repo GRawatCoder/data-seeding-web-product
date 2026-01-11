@@ -2,6 +2,7 @@ const sandboxAuthStore = {}
 
 export function saveSandboxAuth(sandboxId, auth) {
   sandboxAuthStore[sandboxId] = auth
+  console.log(sandboxAuthStore[sandboxId])
 }
 
 export function getSandboxAuth(sandboxId) {
