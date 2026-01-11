@@ -22,3 +22,14 @@ export async function fetchDependencies(sandboxId, objects) {
   if (!res.ok) throw new Error('Failed to fetch dependencies')
   return res.json()
 }
+
+export async function fetchPreview(sandboxId, objectName) {
+  const res = await fetch(
+    `http://localhost:4000/seeding/preview/${sandboxId}?objectName=${objectName}&limit=5`,
+    { credentials: 'include' }
+  )
+
+  if (!res.ok) throw new Error('Failed to fetch preview')
+  return res.json()
+}
+
