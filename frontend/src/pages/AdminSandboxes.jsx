@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchSandboxes, createSandbox, deleteSandbox } from '../services/sandboxApi'
+import { fetchSandboxes, createSandbox, deleteSandbox,fetchSandboxHealth } from '../services/sandboxApi'
 import { motion } from 'framer-motion'
+
 import {
   Link2,
   CheckCircle2,
@@ -22,6 +23,28 @@ export default function AdminSandboxes() {
     queryKey: ['sandboxes'],
     queryFn: fetchSandboxes,
   })
+
+  const [healthMap, setHealthMap] = useState({})
+useEffect(() => {
+    if (!sandboxes.length) return;
+
+    sandboxes.forEach((sb) => {
+      fetchSandboxHealth(sb.id)
+        .then((res) => {
+          setHealthMap((prev) => ({
+            ...prev,
+            [sb.id]: res.status,
+          }));
+        })
+        .catch(() => {
+          setHealthMap((prev) => ({
+            ...prev,
+            [sb.id]: "ERROR",
+          }));
+        });
+    });
+  }, [sandboxes]);
+
 
   const mutation = useMutation({
     mutationFn: createSandbox,
@@ -104,7 +127,7 @@ export default function AdminSandboxes() {
           <p className="md:col-span-3 text-red-500 text-sm">
             {mutation.error.message}
           </p>
-        )}        
+        )}
       </motion.form>
 
       {/* Sandbox List */}
@@ -169,6 +192,21 @@ export default function AdminSandboxes() {
                   Connected
                 </button>
               )}
+
+              <span
+                className={`text-xs px-2 py-1 rounded
+    ${
+      healthMap[sb.id] === "HEALTHY"
+        ? "bg-green-100 text-green-700"
+        : healthMap[sb.id] === "EXPIRED"
+        ? "bg-yellow-100 text-yellow-700"
+        : healthMap[sb.id] === "ERROR"
+        ? "bg-red-100 text-red-700"
+        : "bg-gray-200 text-gray-600"
+    }`}
+              >
+                {healthMap[sb.id] || "UNKNOWN"}
+              </span>
 
               <button
                 disabled={deleteMutation.isLoading}

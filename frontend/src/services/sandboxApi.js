@@ -25,3 +25,10 @@ export async function createSandbox(payload) {
     throw new Error(err.message || 'Failed to create sandbox')
   }
 }
+
+export async function fetchSandboxHealth(id) {
+  const res = await fetch(`http://localhost:4000/health/${id}`)
+  if (!res.ok) throw new Error('Health check failed')
+  return res.json()
+}
+
