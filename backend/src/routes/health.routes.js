@@ -1,12 +1,8 @@
 import { Router } from 'express'
+import { sandboxHealth } from '../controllers/health.controller.js'
 
 const router = Router()
 
-router.get('/', (req, res) => {
-  res.json({
-    status: 'UP',
-    timestamp: new Date().toISOString(),
-  })
-})
+router.get('/:sandboxId', sandboxHealth)
 
 export default router
