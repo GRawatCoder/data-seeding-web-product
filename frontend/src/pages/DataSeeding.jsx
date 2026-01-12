@@ -3,6 +3,8 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { fetchSandboxes } from '../services/sandboxApi'
 import { fetchObjects, fetchDependencies } from '../services/seedingApi'
 import ObjectPreview from '../components/ObjectPreview'
+import ExecutionOrderPreview from '../components/ExecutionOrderPreview'
+
 
 export default function DataSeeding() {
   const [sourceSandboxId, setSourceSandboxId] = useState('')
@@ -126,6 +128,14 @@ export default function DataSeeding() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* 🔽 EXECUTION ORDER GOES HERE 🔽 */}
+      {selectedObjects.length > 0 && (
+        <ExecutionOrderPreview
+          sandboxId={sourceSandboxId}
+          selectedObjects={selectedObjects}
+        />
       )}
     </div>
   );

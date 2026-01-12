@@ -33,3 +33,17 @@ export async function fetchPreview(sandboxId, objectName) {
   return res.json()
 }
 
+export async function fetchExecutionOrder(sandboxId, objects) {
+  const res = await fetch(
+    `http://localhost:4000/seeding/execution-order/${sandboxId}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ objects }),
+    }
+  )
+
+  if (!res.ok) throw new Error('Failed to fetch execution order')
+  return res.json()
+}

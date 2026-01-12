@@ -1,5 +1,8 @@
 import axios from 'axios'
 import { getSandboxAuth } from '../services/auth.store.js'
+import { resolveExecutionOrder } from '../services/executionOrder.service.js'
+import { resolveDependencies } from '../services/sfDependency.service.js'
+
 
 export async function listObjects(req, res) {
   const { sandboxId } = req.params
@@ -49,3 +52,17 @@ export async function previewData(req, res) {
   })
 }
 
+export async function getExecutionOrder(req, res) {
+  const { sandboxId } = req.params
+  const { objects } = req.body
+
+  if (!Array.isArray(objects) || !objects.length) {
+    return res.status(400).json({ error: 'objects array required' })
+  }
+
+  // reuse dependency resolver
+  const graph = await resolveDependencies(sandboxId, objects)
+  const order = resolveExecutionOrder(graph)
+
+  res.json({ order })
+}
