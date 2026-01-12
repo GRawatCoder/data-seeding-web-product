@@ -2,6 +2,17 @@ import crypto from 'crypto'
 
 const sandboxes = []
 
+export const sandboxStore = new Map()
+
+export function getSandbox(id) {
+  return sandboxStore.get(id)
+}
+
+export function saveSandbox(sandbox) {
+  sandboxStore.set(sandbox.id, sandbox)
+}
+
+
 export function getSandboxes() {
   return sandboxes
 }

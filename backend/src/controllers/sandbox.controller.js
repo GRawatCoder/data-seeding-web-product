@@ -1,20 +1,33 @@
 import { getSandboxes, addSandbox } from '../services/sandbox.store.js'
 import { deleteSandbox } from '../services/sandbox.store.js'
 import { removeSandboxAuth } from '../services/auth.store.js'
+import { encrypt } from '../utils/crypto.util.js'
+import { saveSandbox } from '../services/sandbox.store.js'
+import { v4 as uuid } from 'uuid'
 
 export function listSandboxes(req, res) {
   res.json(getSandboxes())
 }
 
 export function createSandbox(req, res) {
-  const { name, type, loginUrl } = req.body
+  const {
+    name,
+    loginUrl,
+    clientId,
+    clientSecret,
+  } = req.body
 
-  if (!name || !type || !loginUrl) {
-    return res.status(400).json({ message: 'Missing required fields' })
+  const sandbox = {
+    id: uuid(),
+    name,
+    loginUrl,
+    clientId,
+    clientSecret: encrypt(clientSecret),
+    status: 'DISCONNECTED',
   }
 
-  addSandbox({ name, type, loginUrl })
-  res.status(201).json({ message: 'Sandbox added successfully' })
+  saveSandbox(sandbox)
+  res.json(sandbox)
 }
 
 export function removeSandbox(req, res) {

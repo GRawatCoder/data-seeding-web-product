@@ -16,6 +16,8 @@ export default function AdminSandboxes() {
     name: '',
     type: 'DEV',
     loginUrl: '',
+    clientId: '',
+    clientSecret: ''
   })
 
   const { data: sandboxes = [], isLoading } = useQuery({
@@ -124,11 +126,28 @@ export default function AdminSandboxes() {
           required
         />
 
+        <input
+          name="clientId"
+          placeholder="Client ID"
+          value={form.clientId}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="clientSecret"
+          placeholder="Client Secret"
+          type="password"
+          value={form.clientSecret}
+          onChange={handleChange}
+          required
+        />
+
         <button
           disabled={createMutation.isLoading}
           className="md:col-span-3 bg-black text-white py-2 rounded-md disabled:opacity-50"
         >
-          {createMutation.isLoading ? 'Adding…' : 'Add Sandbox'}
+          {createMutation.isLoading ? "Adding…" : "Add Sandbox"}
         </button>
 
         {createMutation.isError && (
@@ -167,35 +186,34 @@ export default function AdminSandboxes() {
                 transition={{ duration: 0.2 }}
                 className={`text-xs px-2 py-1 rounded
                   ${
-                    sb.status === 'CONNECTED'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-200 text-gray-700'
+                    sb.status === "CONNECTED"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-200 text-gray-700"
                   }`}
               >
                 {sb.status}
               </motion.span>
 
               {/* Health Status */}
-              {sb.status === 'CONNECTED' && (
-  <span
-    className={`text-xs px-2 py-1 rounded
+              {sb.status === "CONNECTED" && (
+                <span
+                  className={`text-xs px-2 py-1 rounded
       ${
-        healthMap[sb.id] === 'HEALTHY'
-          ? 'bg-green-100 text-green-700'
-          : healthMap[sb.id] === 'EXPIRED'
-          ? 'bg-yellow-100 text-yellow-700'
-          : healthMap[sb.id] === 'ERROR'
-          ? 'bg-red-100 text-red-700'
-          : 'bg-gray-200 text-gray-600'
+        healthMap[sb.id] === "HEALTHY"
+          ? "bg-green-100 text-green-700"
+          : healthMap[sb.id] === "EXPIRED"
+          ? "bg-yellow-100 text-yellow-700"
+          : healthMap[sb.id] === "ERROR"
+          ? "bg-red-100 text-red-700"
+          : "bg-gray-200 text-gray-600"
       }`}
-  >
-    {healthMap[sb.id] || 'UNKNOWN'}
-  </span>
-)}
-
+                >
+                  {healthMap[sb.id] || "UNKNOWN"}
+                </span>
+              )}
 
               {/* Connect Action */}
-              {sb.status !== 'CONNECTED' && (
+              {sb.status !== "CONNECTED" && (
                 <a
                   href={`http://localhost:4000/oauth/login?sandboxId=${sb.id}`}
                   className="px-3 py-1.5 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-1"
@@ -209,16 +227,14 @@ export default function AdminSandboxes() {
               <button
                 disabled={deleteMutation.isLoading}
                 onClick={() => {
-                  const ok = window.confirm(
-                    `Delete sandbox "${sb.name}"?`
-                  )
-                  if (ok) deleteMutation.mutate(sb.id)
+                  const ok = window.confirm(`Delete sandbox "${sb.name}"?`);
+                  if (ok) deleteMutation.mutate(sb.id);
                 }}
                 className={`px-2 py-1 rounded-md text-sm flex items-center gap-1
                   ${
                     deleteMutation.isLoading
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-red-100 text-red-700 hover:bg-red-200'
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-red-100 text-red-700 hover:bg-red-200"
                   }`}
               >
                 {deleteMutation.isLoading ? (
@@ -233,5 +249,5 @@ export default function AdminSandboxes() {
         ))}
       </div>
     </div>
-  )
+  );
 }

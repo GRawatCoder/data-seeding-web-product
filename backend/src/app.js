@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import { env } from './config/env.js'
 import healthRoutes from './routes/health.routes.js'
 import sandboxRoutes from './routes/sandbox.routes.js'
 import oauthRoutes from './routes/oauth.routes.js'
@@ -9,7 +10,7 @@ import seedingRoutes from './routes/seeding.routes.js'
 const app = express()
 
 app.use(cors({
-  origin: 'http://localhost:5174',
+  origin: 'http://localhost:5173',
   credentials: true,
 }))
 
