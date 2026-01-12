@@ -47,3 +47,21 @@ export async function fetchExecutionOrder(sandboxId, objects) {
   if (!res.ok) throw new Error('Failed to fetch execution order')
   return res.json()
 }
+
+export async function validateTargetSandbox(
+  targetSandboxId,
+  objects
+) {
+  const res = await fetch(
+    `http://localhost:4000/seeding/validate-target/${targetSandboxId}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ objects }),
+    }
+  )
+
+  if (!res.ok) throw new Error('Target validation failed')
+  return res.json()
+}

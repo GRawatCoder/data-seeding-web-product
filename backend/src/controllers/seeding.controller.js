@@ -2,7 +2,8 @@ import axios from 'axios'
 import { getSandboxAuth } from '../services/auth.store.js'
 import { resolveExecutionOrder } from '../services/executionOrder.service.js'
 import { resolveDependencies } from '../services/sfDependency.service.js'
-
+import { validateTargetSandbox } from '../services/targetValidation.service.js'
+import { runSoqlQuery } from '../services/soql.service.js'
 
 export async function listObjects(req, res) {
   const { sandboxId } = req.params
@@ -65,4 +66,16 @@ export async function getExecutionOrder(req, res) {
   const order = resolveExecutionOrder(graph)
 
   res.json({ order })
+}
+
+export async function validateTarget(req, res) {
+  const { sandboxId } = req.params
+  const { objects } = req.body
+
+  if (!Array.isArray(objects) || !objects.length) {
+    return res.status(400).json({ error: 'objects array required' })
+  }
+
+  const result = await validateTargetSandbox(objects, sandboxId)
+  res.json({ result })
 }

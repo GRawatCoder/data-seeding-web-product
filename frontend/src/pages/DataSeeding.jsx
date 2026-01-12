@@ -4,7 +4,7 @@ import { fetchSandboxes } from '../services/sandboxApi'
 import { fetchObjects, fetchDependencies } from '../services/seedingApi'
 import ObjectPreview from '../components/ObjectPreview'
 import ExecutionOrderPreview from '../components/ExecutionOrderPreview'
-
+import TargetSandboxSelector from '../components/TargetSandboxSelector'
 
 export default function DataSeeding() {
   const [sourceSandboxId, setSourceSandboxId] = useState('')
@@ -134,6 +134,13 @@ export default function DataSeeding() {
       {selectedObjects.length > 0 && (
         <ExecutionOrderPreview
           sandboxId={sourceSandboxId}
+          selectedObjects={selectedObjects}
+        />
+      )}
+
+      {selectedObjects.length > 0 && (
+        <TargetSandboxSelector
+          sandboxes={sandboxes}
           selectedObjects={selectedObjects}
         />
       )}
