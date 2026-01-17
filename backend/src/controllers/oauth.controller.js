@@ -68,7 +68,7 @@ export async function oauthCallback(req, res) {
     return res.status(400).send('Invalid OAuth state')
   }
 
-  const sandbox = getSandboxById(sandboxId)
+  const sandbox = getSandbox(sandboxId)
   if (!sandbox) {
     return res.status(404).send('Sandbox not found')
   }

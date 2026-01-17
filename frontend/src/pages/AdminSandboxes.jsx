@@ -1,37 +1,38 @@
-import { useState, useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchSandboxes,
   createSandbox,
   deleteSandbox,
   fetchSandboxHealth,
-} from '../services/sandboxApi'
-import { motion } from 'framer-motion'
-import { Link2, Trash2, Loader2 } from 'lucide-react'
+} from "../services/sandboxApi";
+import { motion } from "framer-motion";
+import { Link2, Trash2, Loader2 } from "lucide-react";
+import { QUERY_KEYS } from "../constants/queryKeys";
 
 export default function AdminSandboxes() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const [form, setForm] = useState({
-    name: '',
-    type: 'DEV',
-    loginUrl: '',
-    clientId: '',
-    clientSecret: ''
-  })
+    name: "",
+    type: "DEV",
+    loginUrl: "",
+    clientId: "",
+    clientSecret: "",
+  });
 
   const { data: sandboxes = [], isLoading } = useQuery({
-    queryKey: ['sandboxes'],
+    queryKey: QUERY_KEYS.SANDBOXES,
     queryFn: fetchSandboxes,
-  })
-
+  });
+  console.log("Sandboxes from cache:", sandboxes);
   // -----------------------
   // Health state per sandbox
   // -----------------------
-  const [healthMap, setHealthMap] = useState({})
+  const [healthMap, setHealthMap] = useState({});
 
   useEffect(() => {
-    if (!sandboxes.length) return
+    if (!sandboxes.length) return;
 
     sandboxes.forEach((sb) => {
       fetchSandboxHealth(sb.id)
@@ -39,35 +40,45 @@ export default function AdminSandboxes() {
           setHealthMap((prev) => ({
             ...prev,
             [sb.id]: res.status,
-          }))
+          }));
         })
         .catch(() => {
           setHealthMap((prev) => ({
             ...prev,
-            [sb.id]: 'ERROR',
-          }))
-        })
-    })
-  }, [sandboxes])
+            [sb.id]: "ERROR",
+          }));
+        });
+    });
+  }, [sandboxes]);
 
   // -----------------------
   // Create sandbox
   // -----------------------
   const createMutation = useMutation({
     mutationFn: createSandbox,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['sandboxes'])
-      setForm({ name: '', type: 'DEV', loginUrl: '' })
+    onSuccess: (newSandbox) => {
+      queryClient.setQueryData(QUERY_KEYS.SANDBOXES, (old = []) => [
+        ...old,
+        newSandbox,
+      ]);
+
+      setForm({
+        name: "",
+        type: "DEV",
+        loginUrl: "",
+        clientId: "",
+        clientSecret: "",
+      });
     },
-  })
+  });
 
   function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    setForm({ ...form, [e.target.name]: e.target.value });
   }
 
   function handleSubmit(e) {
-    e.preventDefault()
-    createMutation.mutate(form)
+    e.preventDefault();
+    createMutation.mutate(form);
   }
 
   // -----------------------
@@ -76,9 +87,11 @@ export default function AdminSandboxes() {
   const deleteMutation = useMutation({
     mutationFn: deleteSandbox,
     onSuccess: () => {
-      queryClient.invalidateQueries(['sandboxes'])
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.SANDBOXES,
+      });
     },
-  })
+  });
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -131,6 +144,7 @@ export default function AdminSandboxes() {
           placeholder="Client ID"
           value={form.clientId}
           onChange={handleChange}
+          className="md:col-span-3 px-3 py-2 rounded-md bg-gray-100"
           required
         />
 
@@ -140,6 +154,7 @@ export default function AdminSandboxes() {
           type="password"
           value={form.clientSecret}
           onChange={handleChange}
+          className="md:col-span-3 px-3 py-2 rounded-md bg-gray-100"
           required
         />
 

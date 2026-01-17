@@ -14,31 +14,33 @@ export function saveSandbox(sandbox) {
 
 
 export function getSandboxes() {
-  return sandboxes
+  return Array.from(sandboxStore.values())
 }
 
-export function addSandbox(sandbox) {
-  sandboxes.push({
+export function addSandbox(data) {
+  const sandbox = {
     id: crypto.randomUUID(),
-    name: sandbox.name,
-    type: sandbox.type,
-    loginUrl: sandbox.loginUrl,
+    name: data.name,
+    type: data.type,
+    loginUrl: data.loginUrl,
+    clientId: data.clientId,
+    clientSecret: data.clientSecret,
     status: 'DISCONNECTED',
     createdAt: new Date().toISOString(),
-  })
+  }
+
+  sandboxStore.set(sandbox.id, sandbox)
+  return sandbox
 }
 
-export function markSandboxConnected(sandboxId) {
-  const sb = sandboxes.find(s => s.id === sandboxId)
-  if (sb) {
-    sb.status = 'CONNECTED'
-    sb.connectedAt = new Date().toISOString()
-  }
+export function markSandboxConnected(id) {
+  const sb = sandboxStore.get(id)
+  if (!sb) return
+
+  sb.status = 'CONNECTED'
+  sb.connectedAt = new Date().toISOString()
 }
 
-export function deleteSandbox(sandboxId) {
-  const index = sandboxes.findIndex(s => s.id === sandboxId)
-  if (index !== -1) {
-    sandboxes.splice(index, 1)
-  }
+export function deleteSandbox(id) {
+  sandboxStore.delete(id)
 }

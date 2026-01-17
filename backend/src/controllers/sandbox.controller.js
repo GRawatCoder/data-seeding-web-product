@@ -12,18 +12,27 @@ export function listSandboxes(req, res) {
 export function createSandbox(req, res) {
   const {
     name,
+    type,
     loginUrl,
     clientId,
     clientSecret,
   } = req.body
 
+  if (!name || !loginUrl || !clientId || !clientSecret) {
+    return res.status(400).json({
+      error: 'Missing required sandbox fields',
+    })
+  }
+
   const sandbox = {
     id: uuid(),
     name,
     loginUrl,
+    type,
     clientId,
     clientSecret: encrypt(clientSecret),
     status: 'DISCONNECTED',
+    createdAt: new Date().toISOString(),
   }
 
   saveSandbox(sandbox)

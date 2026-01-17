@@ -24,6 +24,8 @@ export async function createSandbox(payload) {
     const err = await res.json()
     throw new Error(err.message || 'Failed to create sandbox')
   }
+
+  return res.json()
 }
 
 export async function fetchSandboxHealth(id) {

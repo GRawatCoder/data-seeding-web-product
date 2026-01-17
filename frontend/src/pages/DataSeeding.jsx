@@ -5,6 +5,7 @@ import { fetchObjects, fetchDependencies } from "../services/seedingApi";
 import ObjectPreview from "../components/ObjectPreview";
 import ExecutionOrderPreview from "../components/ExecutionOrderPreview";
 import TargetSandboxSelector from "../components/TargetSandboxSelector";
+import DryRunReport from "../components/DryRunReport";
 
 export default function DataSeeding() {
   const [sourceSandboxId, setSourceSandboxId] = useState("");
