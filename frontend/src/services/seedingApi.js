@@ -65,3 +65,19 @@ export async function validateTargetSandbox(
   if (!res.ok) throw new Error('Target validation failed')
   return res.json()
 }
+
+export async function runDryRun(payload) {
+  const res = await fetch(
+    'http://localhost:4000/seeding/dry-run',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    }
+  )
+
+  if (!res.ok) throw new Error('Dry-run failed')
+  return res.json()
+}
+

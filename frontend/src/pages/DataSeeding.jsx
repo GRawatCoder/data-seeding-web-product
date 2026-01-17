@@ -1,53 +1,54 @@
-import { useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { fetchSandboxes } from '../services/sandboxApi'
-import { fetchObjects, fetchDependencies } from '../services/seedingApi'
-import ObjectPreview from '../components/ObjectPreview'
-import ExecutionOrderPreview from '../components/ExecutionOrderPreview'
-import TargetSandboxSelector from '../components/TargetSandboxSelector'
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { fetchSandboxes } from "../services/sandboxApi";
+import { fetchObjects, fetchDependencies } from "../services/seedingApi";
+import ObjectPreview from "../components/ObjectPreview";
+import ExecutionOrderPreview from "../components/ExecutionOrderPreview";
+import TargetSandboxSelector from "../components/TargetSandboxSelector";
 
 export default function DataSeeding() {
-  const [sourceSandboxId, setSourceSandboxId] = useState('')
-  const [search, setSearch] = useState('')
-  const [selectedObjects, setSelectedObjects] = useState([])
+  const [sourceSandboxId, setSourceSandboxId] = useState("");
+  const [targetSandboxId, setTargetSandboxId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [selectedObjects, setSelectedObjects] = useState([]);
 
   const { data: sandboxes = [] } = useQuery({
-    queryKey: ['sandboxes'],
+    queryKey: ["sandboxes"],
     queryFn: fetchSandboxes,
-  })
+  });
 
   const { data: objects = [] } = useQuery({
-    queryKey: ['objects', sourceSandboxId],
+    queryKey: ["objects", sourceSandboxId],
     queryFn: () => fetchObjects(sourceSandboxId),
     enabled: !!sourceSandboxId,
-  })
+  });
 
   const dependencyMutation = useMutation({
     mutationFn: ({ sandboxId, objects }) =>
       fetchDependencies(sandboxId, objects),
-  })
+  });
 
   function toggleObject(apiName) {
-    let next
+    let next;
     if (selectedObjects.includes(apiName)) {
-      next = selectedObjects.filter((o) => o !== apiName)
+      next = selectedObjects.filter((o) => o !== apiName);
     } else {
-      next = [...selectedObjects, apiName]
+      next = [...selectedObjects, apiName];
     }
 
-    setSelectedObjects(next)
+    setSelectedObjects(next);
 
     if (next.length) {
       dependencyMutation.mutate({
         sandboxId: sourceSandboxId,
         objects: next,
-      })
+      });
     }
   }
 
   const filteredObjects = objects.filter((o) =>
     o.name.toLowerCase().includes(search.toLowerCase())
-  )
+  );
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -141,6 +142,15 @@ export default function DataSeeding() {
       {selectedObjects.length > 0 && (
         <TargetSandboxSelector
           sandboxes={sandboxes}
+          selectedObjects={selectedObjects}
+          onTargetSelected={setTargetSandboxId} // ✅
+        />
+      )}
+
+      {targetSandboxId && (
+        <DryRunReport
+          sourceSandboxId={sourceSandboxId}
+          targetSandboxId={targetSandboxId}
           selectedObjects={selectedObjects}
         />
       )}

@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle } from 'lucide-react'
 export default function TargetSandboxSelector({
   sandboxes,
   selectedObjects,
+  onTargetSelected
 }) {
   const mutation = useMutation({
     mutationFn: ({ sandboxId, objects }) =>
@@ -14,7 +15,7 @@ export default function TargetSandboxSelector({
   function handleSelect(e) {
     const sandboxId = e.target.value
     if (!sandboxId) return
-
+    onTargetSelected(sandboxId)
     mutation.mutate({
       sandboxId,
       objects: selectedObjects,
