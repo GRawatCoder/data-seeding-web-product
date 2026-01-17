@@ -79,3 +79,51 @@ export async function validateTarget(req, res) {
   const result = await validateTargetSandbox(objects, sandboxId)
   res.json({ result })
 }
+
+export async function dryRun(req, res) {
+  const {
+    sourceSandboxId,
+    targetSandboxId,
+    objects,
+  } = req.body
+
+  if (!sourceSandboxId || !targetSandboxId || !objects?.length) {
+    return res.status(400).json({ error: 'Invalid dry-run request' })
+  }
+
+  // 1. Resolve dependencies
+  const dependencyGraph =
+    await resolveDependencies(sourceSandboxId, objects)
+
+  // 2. Resolve execution order
+  const executionOrder =
+    resolveExecutionOrder(dependencyGraph)
+
+  // 3. Count records per object
+  const recordCounts = {}
+  for (const obj of executionOrder) {
+    recordCounts[obj] =
+      await countRecords(sourceSandboxId, obj)
+  }
+
+  // 4. Validate target compatibility
+  const validation =
+    await validateTargetSandbox(
+      executionOrder,
+      targetSandboxId
+    )
+
+  res.json({
+    sourceSandboxId,
+    targetSandboxId,
+    executionOrder,
+    recordCounts,
+    validation,
+    summary: {
+      totalObjects: executionOrder.length,
+      totalRecords: Object.values(recordCounts)
+        .reduce((a, b) => a + b, 0),
+    },
+  })
+}
+
