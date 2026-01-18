@@ -39,6 +39,7 @@ export function markSandboxConnected(id) {
 
   sb.status = 'CONNECTED'
   sb.connectedAt = new Date().toISOString()
+  sandboxStore.set(sb.id, sb)
 }
 
 export function deleteSandbox(id) {

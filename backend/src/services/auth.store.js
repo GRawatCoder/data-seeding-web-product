@@ -6,6 +6,8 @@ export function saveSandboxAuth(sandboxId, auth) {
 }
 
 export function getSandboxAuth(sandboxId) {
+  const auth = sandboxAuthStore[sandboxId]
+  console.log('[AUTH]', sandboxId, auth ? 'FOUND' : 'MISSING')
   return sandboxAuthStore[sandboxId]
 }
 

@@ -6,7 +6,7 @@ export async function runSoqlQuery(sandboxId, soql) {
   const auth = getSandboxAuth(sandboxId)
 
   if (!auth) {
-    throw new Error('Sandbox not connected')
+    throw new Error('Sandbox not connected: ' + sandboxId)
   }
 
   try {

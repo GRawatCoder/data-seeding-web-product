@@ -81,3 +81,16 @@ export async function runDryRun(payload) {
   return res.json()
 }
 
+export async function executeSeeding(payload) {
+  const res = await fetch('http://localhost:4000/seeding/execute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  })
+
+  if (!res.ok) throw new Error('Execution failed')
+  return res.json()
+}
+
+

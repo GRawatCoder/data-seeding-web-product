@@ -49,7 +49,7 @@ export default function DataSeeding() {
 
   const filteredObjects = objects.filter((o) =>
     o.name.toLowerCase().includes(search.toLowerCase())
-  );
+  );  
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -148,6 +148,7 @@ export default function DataSeeding() {
         />
       )}
 
+      {/* Dry-Run + Execute (FINAL GATE) */}
       {targetSandboxId && (
         <DryRunReport
           sourceSandboxId={sourceSandboxId}
