@@ -4,6 +4,7 @@ import { resolveExecutionOrder } from '../services/executionOrder.service.js'
 import { resolveDependencies } from '../services/sfDependency.service.js'
 import { validateTargetSandbox } from '../services/targetValidation.service.js'
 import { runSoqlQuery } from '../services/soql.service.js'
+import { countRecords } from '../services/recordCount.service.js'
 
 export async function listObjects(req, res) {
   const { sandboxId } = req.params

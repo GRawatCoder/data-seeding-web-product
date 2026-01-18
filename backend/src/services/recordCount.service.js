@@ -1,3 +1,5 @@
+import { runSoqlQuery } from './soql.service.js'
+
 export async function countRecords(sandboxId, objectName) {
   const result = await runSoqlQuery(
     sandboxId,
