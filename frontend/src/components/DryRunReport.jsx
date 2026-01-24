@@ -1,11 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
 import { runDryRun, executeSeeding } from "../services/seedingApi";
+import { useState } from "react";
 
 export default function DryRunReport({
   sourceSandboxId,
   targetSandboxId,
   selectedObjects,
 }) {
+
+    const [maxRecords, setMaxRecords] = useState(10);
+
   // -----------------------
   // Dry-Run (read-only)
   // -----------------------
@@ -41,6 +45,7 @@ export default function DryRunReport({
       sourceSandboxId,
       targetSandboxId,
       objects: selectedObjects,
+      maxRecordsPerObject: maxRecords,
     });
   }
 
@@ -70,6 +75,19 @@ export default function DryRunReport({
               {dryRunMutation.data.summary.totalRecords}
             </p>
           </div>
+          <div className="flex items-center gap-3 text-sm">
+            <label className="font-medium">Records per object:</label>
+
+            <select
+              value={maxRecords}
+              onChange={(e) => setMaxRecords(Number(e.target.value))}
+              className="px-2 py-1 rounded bg-gray-100 border"
+            >
+              <option value={10}>10 (Safe)</option>
+              <option value={50}>50</option>
+              <option value={100}>100 (Max)</option>
+            </select>
+          </div>
 
           {/* ✅ EXECUTE BUTTON — ONLY AFTER DRY-RUN */}
           <button
@@ -77,17 +95,13 @@ export default function DryRunReport({
             className="bg-red-600 text-white px-4 py-2 rounded"
             disabled={executeMutation.isLoading}
           >
-            {executeMutation.isLoading
-              ? "Executing…"
-              : "Execute Seeding"}
+            {executeMutation.isLoading ? "Executing…" : "Execute Seeding"}
           </button>
         </>
       )}
 
       {executeMutation.isSuccess && (
-        <p className="text-green-600 text-sm">
-          Seeding completed successfully
-        </p>
+        <p className="text-green-600 text-sm">Seeding completed successfully</p>
       )}
 
       {executeMutation.isError && (
