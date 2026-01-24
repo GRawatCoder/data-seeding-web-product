@@ -9,13 +9,14 @@ export async function seedObject({
   fields,
   batchSize,
   idMap,
+  maxRecords = 10,
   emitProgress,
 }) {
   let lastSeenId = null
   let done = false
-  let total = 0
+  let totalInserted = 0
 
-  while (!done) {
+  while (!done && totalInserted < maxRecords) {
     const result = await querySource({
       sandboxId: sourceSandboxId,
       objectName,
@@ -29,23 +30,31 @@ export async function seedObject({
 
     if (!result.records.length) break
 
-    const transformed = result.records.map(r =>
-      transformRecord({ record: r, idMap })
-    )
+    const remaining = maxRecords - totalInserted;
+    const recordsToInsert = result.records.slice(0, remaining);
 
-    const insertResults = await insertTarget({
-      sandboxId: targetSandboxId,
-      objectName,
-      records: transformed,
-    })
+    const transformed = recordsToInsert.map((r) =>
+      transformRecord({ record: r, idMap })
+    );
+
 
     insertResults.forEach((res, idx) => {
       if (res.success) {
-        idMap[result.records[idx].Id] = res.id
+        idMap[recordsToInsert[idx].Id] = res.id;
+        totalInserted++;
+      } else {
+        console.error(
+          `[INSERT FAILED] ${objectName}`,
+          recordsToInsert[idx],
+          res.errors
+        );
       }
-    })
+    });
 
-    total += result.records.length
-    emitProgress?.({ objectName, total })
+    emitProgress?.({ objectName, totalInserted });
+
   }
+  console.log(
+    `[SEEDING COMPLETE] ${objectName}: inserted ${totalInserted} records`
+  )
 }

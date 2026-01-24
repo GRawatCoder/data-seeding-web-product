@@ -119,7 +119,8 @@ export async function dryRun(req, res) {
 }
 
 export async function executeSeeding(req, res) {
-  const { sourceSandboxId, targetSandboxId, objects } = req.body;
+  const { sourceSandboxId, targetSandboxId, objects,
+    maxRecordsPerObject = 10 } = req.body;
 
   if (!getSandboxAuth(sourceSandboxId)) {
     return res.status(400).json({
@@ -151,6 +152,7 @@ export async function executeSeeding(req, res) {
       fields: ["Name"], // expand later
       batchSize: 200,
       idMap,
+      maxRecords: maxRecordsPerObject
     });
   }
 
