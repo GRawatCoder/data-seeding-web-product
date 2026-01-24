@@ -1,8 +1,10 @@
-import express from 'express'
+import { Router } from 'express'
 
 const clients = [];
+const router = Router();
 
 export function sendProgress(data) {
+    console.log("[SSE EMIT]", data);
   clients.forEach(res => {
     res.write(`data: ${JSON.stringify(data)}\n\n`);
   });

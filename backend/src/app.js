@@ -6,6 +6,7 @@ import sandboxRoutes from './routes/sandbox.routes.js'
 import oauthRoutes from './routes/oauth.routes.js'
 import dependencyRoutes from './routes/dependency.routes.js'
 import seedingRoutes from './routes/seeding.routes.js'
+import progressRoutes from './routes/progress.routes.js'
 
 const app = express()
 
@@ -21,5 +22,6 @@ app.use('/api/sandboxes', sandboxRoutes)
 app.use('/oauth', oauthRoutes)
 app.use('/seeding/dependencies', dependencyRoutes)
 app.use('/seeding', seedingRoutes)
+app.use('/', progressRoutes)
 
 export default app

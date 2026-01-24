@@ -12,22 +12,6 @@ export default function DryRunReport({
   const [maxRecords, setMaxRecords] = useState(10);
   const [progress, setProgress] = useState({});
 
-  useEffect(() => {
-    if (!executeMutation.isLoading) return;
-
-    const es = new EventSource("http://localhost:4000/progress");
-
-    es.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setProgress((prev) => ({
-        ...prev,
-        [data.object]: data.inserted,
-      }));
-    };
-
-    return () => es.close();
-  }, [executeMutation.isLoading]);
-
   // -----------------------
   // Dry-Run (read-only)
   // -----------------------
@@ -41,6 +25,28 @@ export default function DryRunReport({
   const executeMutation = useMutation({
     mutationFn: executeSeeding,
   });
+
+  useEffect(() => {
+     console.log("[SSE] executeMutation.isPending =", executeMutation.isPending);
+    if (!executeMutation.isPending) return;
+    console.log("[SSE] Subscribing to progress");
+    const es = new EventSource("http://localhost:4000/progress");
+
+    es.onmessage = (event) => {
+        console.log("[SSE MESSAGE]", event.data);
+      const data = JSON.parse(event.data);
+      setProgress((prev) => ({
+        ...prev,
+        [data.object]: data.inserted,
+      }));
+    };
+
+    return () => {
+        es.close();
+        console.log("[SSE] Unsubscribed/Close from progress");};
+  }, [executeMutation.isPending]);
+
+  
 
   function handleDryRun() {
     dryRunMutation.mutate({
@@ -58,6 +64,7 @@ export default function DryRunReport({
     ) {
       return;
     }
+    setProgress({}); // reset progress
 
     executeMutation.mutate({
       sourceSandboxId,
@@ -77,7 +84,7 @@ export default function DryRunReport({
         whileTap={{ scale: 0.97 }}
         transition={{ type: "spring", stiffness: 300 }}
         onClick={handleDryRun}
-        disabled={dryRunMutation.isLoading}
+        disabled={dryRunMutation.isPending}
         className={`
     flex items-center gap-2
     px-4 py-2 rounded-md font-medium
@@ -88,7 +95,7 @@ export default function DryRunReport({
     shadow-sm hover:shadow-md
   `}
       >
-        {dryRunMutation.isLoading ? (
+        {dryRunMutation.isPending ? (
           <>
             <Loader2 className="animate-spin" size={16} />
             Running Dry-Run…
@@ -134,7 +141,7 @@ export default function DryRunReport({
             whileTap={{ scale: 0.97 }}
             transition={{ type: "spring", stiffness: 300 }}
             onClick={handleExecute}
-            disabled={executeMutation.isLoading}
+            disabled={executeMutation.isPending}
             className={`
     flex items-center gap-2
     px-4 py-2 rounded-md font-medium
@@ -145,7 +152,7 @@ export default function DryRunReport({
     shadow-sm hover:shadow-md
   `}
           >
-            {executeMutation.isLoading ? (
+            {executeMutation.isPending ? (
               <>
                 <Loader2 className="animate-spin" size={16} />
                 Executing…
@@ -157,7 +164,7 @@ export default function DryRunReport({
         </>
       )}
 
-      {executeMutation.isLoading && (
+      {executeMutation.isPending && (
         <div className="mt-4 space-y-2">
           {Object.entries(progress).map(([object, count]) => (
             <div key={object} className="text-sm">
