@@ -6,6 +6,7 @@ import { validateTargetSandbox } from "../services/targetValidation.service.js";
 import { runSoqlQuery } from "../services/soql.service.js";
 import { countRecords } from "../services/recordCount.service.js";
 import { seedObject } from "../services/seeding.engine.js";
+import { sendProgress } from "../routes/progress.routes.js";
 
 export async function listObjects(req, res) {
   const { sandboxId } = req.params;
@@ -119,8 +120,12 @@ export async function dryRun(req, res) {
 }
 
 export async function executeSeeding(req, res) {
-  const { sourceSandboxId, targetSandboxId, objects,
-    maxRecordsPerObject = 10 } = req.body;
+  const {
+    sourceSandboxId,
+    targetSandboxId,
+    objects,
+    maxRecordsPerObject = 10,
+  } = req.body;
 
   if (!getSandboxAuth(sourceSandboxId)) {
     return res.status(400).json({
@@ -152,7 +157,12 @@ export async function executeSeeding(req, res) {
       fields: ["Name"], // expand later
       batchSize: 200,
       idMap,
-      maxRecords: maxRecordsPerObject
+      maxRecords: maxRecordsPerObject,
+      emitProgress: (data) =>
+        sendProgress({
+          object: objectName,
+          inserted: data.totalInserted,
+        })
     });
   }
 

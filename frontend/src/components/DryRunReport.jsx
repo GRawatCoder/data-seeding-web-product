@@ -1,14 +1,32 @@
 import { useMutation } from "@tanstack/react-query";
 import { runDryRun, executeSeeding } from "../services/seedingApi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Loader2, Play } from "lucide-react";
 
 export default function DryRunReport({
   sourceSandboxId,
   targetSandboxId,
   selectedObjects,
 }) {
+  const [maxRecords, setMaxRecords] = useState(10);
+  const [progress, setProgress] = useState({});
 
-    const [maxRecords, setMaxRecords] = useState(10);
+  useEffect(() => {
+    if (!executeMutation.isLoading) return;
+
+    const es = new EventSource("http://localhost:4000/progress");
+
+    es.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setProgress((prev) => ({
+        ...prev,
+        [data.object]: data.inserted,
+      }));
+    };
+
+    return () => es.close();
+  }, [executeMutation.isLoading]);
 
   // -----------------------
   // Dry-Run (read-only)
@@ -54,13 +72,34 @@ export default function DryRunReport({
       <h3 className="font-medium">Dry-Run Validation</h3>
 
       {/* Dry-Run Button */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 300 }}
         onClick={handleDryRun}
-        className="bg-black text-white px-4 py-2 rounded"
         disabled={dryRunMutation.isLoading}
+        className={`
+    flex items-center gap-2
+    px-4 py-2 rounded-md font-medium
+    text-white
+    bg-gradient-to-r from-gray-800 to-gray-900
+    hover:from-gray-700 hover:to-gray-800
+    disabled:opacity-50 disabled:cursor-not-allowed
+    shadow-sm hover:shadow-md
+  `}
       >
-        {dryRunMutation.isLoading ? "Running Dry-Run…" : "Run Dry-Run"}
-      </button>
+        {dryRunMutation.isLoading ? (
+          <>
+            <Loader2 className="animate-spin" size={16} />
+            Running Dry-Run…
+          </>
+        ) : (
+          <>
+            <Play size={16} />
+            Run Dry-Run
+          </>
+        )}
+      </motion.button>
 
       {/* Dry-Run Results */}
       {dryRunMutation.data && (
@@ -90,14 +129,54 @@ export default function DryRunReport({
           </div>
 
           {/* ✅ EXECUTE BUTTON — ONLY AFTER DRY-RUN */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 300 }}
             onClick={handleExecute}
-            className="bg-red-600 text-white px-4 py-2 rounded"
             disabled={executeMutation.isLoading}
+            className={`
+    flex items-center gap-2
+    px-4 py-2 rounded-md font-medium
+    text-white
+    bg-gradient-to-r from-red-600 to-red-700
+    hover:from-red-500 hover:to-red-600
+    disabled:opacity-50 disabled:cursor-not-allowed
+    shadow-sm hover:shadow-md
+  `}
           >
-            {executeMutation.isLoading ? "Executing…" : "Execute Seeding"}
-          </button>
+            {executeMutation.isLoading ? (
+              <>
+                <Loader2 className="animate-spin" size={16} />
+                Executing…
+              </>
+            ) : (
+              <>🚀 Execute Seeding</>
+            )}
+          </motion.button>
         </>
+      )}
+
+      {executeMutation.isLoading && (
+        <div className="mt-4 space-y-2">
+          {Object.entries(progress).map(([object, count]) => (
+            <div key={object} className="text-sm">
+              <div className="flex justify-between mb-1">
+                <span>{object}</span>
+                <span>{count} records</span>
+              </div>
+
+              <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
+                <motion.div
+                  className="h-2 bg-green-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(count / maxRecords) * 100}%` }}
+                  transition={{ ease: "easeOut", duration: 0.4 }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {executeMutation.isSuccess && (

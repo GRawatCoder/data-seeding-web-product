@@ -1,27 +1,26 @@
 import express from 'express'
 
-const clients = []
+const clients = [];
 
-export const sendProgress = (data) => {
+export function sendProgress(data) {
   clients.forEach(res => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`)
-  })
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  });
 }
 
-const router = express.Router()
-
-router.get('/progress', (req, res) => {
+router.get("/progress", (req, res) => {
   res.set({
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-  })
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
 
-  clients.push(res)
+  clients.push(res);
 
-  req.on('close', () => {
-    clients.splice(clients.indexOf(res), 1)
-  })
-})
+  req.on("close", () => {
+    clients.splice(clients.indexOf(res), 1);
+  });
+});
+
 
 export default router

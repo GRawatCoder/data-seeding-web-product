@@ -37,6 +37,12 @@ export async function seedObject({
       transformRecord({ record: r, idMap })
     );
 
+    const insertResults = await insertTarget({
+      sandboxId: targetSandboxId,
+      objectName,
+      records: transformed,
+    })
+
 
     insertResults.forEach((res, idx) => {
       if (res.success) {
