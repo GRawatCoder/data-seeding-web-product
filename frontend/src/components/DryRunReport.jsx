@@ -49,6 +49,7 @@ export default function DryRunReport({
   
 
   function handleDryRun() {
+    //console.log("Starting dry-run for objects:", selectedObjects);
     dryRunMutation.mutate({
       sourceSandboxId,
       targetSandboxId,

@@ -7,6 +7,7 @@ import { runSoqlQuery } from "../services/soql.service.js";
 import { countRecords } from "../services/recordCount.service.js";
 import { seedObject } from "../services/seeding.engine.js";
 import { sendProgress } from "../routes/progress.routes.js";
+import { buildRecordGraph } from '../services/record.graph.builder.js'
 
 export async function listObjects(req, res) {
   const { sandboxId } = req.params;
@@ -80,7 +81,7 @@ export async function validateTarget(req, res) {
   const result = await validateTargetSandbox(objects, sandboxId);
   res.json({ result });
 }
-
+/* Deprecated
 export async function dryRun(req, res) {
   const { sourceSandboxId, targetSandboxId, objects } = req.body;
 
@@ -118,6 +119,48 @@ export async function dryRun(req, res) {
     },
   });
 }
+  */
+
+export async function dryRun(req, res) {
+  const {
+    sourceSandboxId,
+    targetSandboxId,
+    objects,
+    maxRecordsPerObject = 10,
+  } = req.body
+
+  // 1️⃣ Build FULL record graph
+  const graphResult = await buildRecordGraph({
+    sandboxId: sourceSandboxId,
+    rootObjects: objects,
+    maxRecordsPerRoot: maxRecordsPerObject,
+  })
+
+  const { recordsByObject, autoIncludedObjects } = graphResult
+
+  // 2️⃣ Count records
+  const recordCounts = {}
+  let totalRecords = 0
+
+  for (const obj of Object.keys(recordsByObject)) {
+    recordCounts[obj] = recordsByObject[obj].length
+    totalRecords += recordCounts[obj]
+  }
+
+  // 3️⃣ Execution order (object-level, derived)
+  const executionOrder = Object.keys(recordsByObject)
+
+  res.json({
+    executionOrder,
+    recordCounts,
+    autoIncludedObjects,
+    summary: {
+      totalObjects: executionOrder.length,
+      totalRecords,
+    },
+  })
+}
+
 
 export async function executeSeeding(req, res) {
   const {

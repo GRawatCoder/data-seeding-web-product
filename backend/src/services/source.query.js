@@ -6,22 +6,37 @@ const SYSTEM_FIELDS = ['Id']
 export async function querySource({
   sandboxId,
   objectName,
-  fields,
+  fields=[],
   batchSize = 200,
   lastSeenId = null,
+  where = null,
 }) {
   const auth = getSandboxAuth(sandboxId)
   if (!auth) throw new Error('Missing auth')
 
-  const selectFields = [...new Set([...SYSTEM_FIELDS, ...fields])].join(',')
+    //console.log('[Query Source fields] ', fields)
+
+  const selectFields = [...new Set(['Id', ...fields])].join(',')
 
   let soql = `SELECT ${selectFields} FROM ${objectName}`
 
+  const whereClauses = []
+
+  if (where) {
+    whereClauses.push(where)
+  }
+
   if (lastSeenId) {
-    soql += ` WHERE Id > '${lastSeenId}'`
+    whereClauses.push(`Id > '${lastSeenId}'`)
+  }
+
+  if (whereClauses.length) {
+    soql += ` WHERE ${whereClauses.join(' AND ')}`
   }
 
   soql += ` ORDER BY Id ASC LIMIT ${batchSize}`
+
+  console.log('[SOQL Query going to execute]', soql)
 
   const result = await runSoqlQuery(sandboxId, soql)
 
@@ -33,3 +48,4 @@ export async function querySource({
     done: records.length < batchSize,
   }
 }
+

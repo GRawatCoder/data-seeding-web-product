@@ -67,6 +67,7 @@ export async function validateTargetSandbox(
 }
 
 export async function runDryRun(payload) {
+  //console.log('Running dry-run with payload:', payload);
   const res = await fetch(
     'http://localhost:4000/seeding/dry-run',
     {
