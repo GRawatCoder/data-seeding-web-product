@@ -1,12 +1,25 @@
+/**
+ * Transform a source record into a target-safe record
+ * - Rewrites lookup IDs using idMap
+ * - Removes Salesforce system fields
+ */
 export function transformRecord({ record, idMap }) {
-  const clone = { ...record }
-  delete clone.Id
+  const transformed = {}
 
-  for (const key of Object.keys(clone)) {
-    if (key.endsWith('Id') && idMap[clone[key]]) {
-      clone[key] = idMap[clone[key]]
+  for (const [field, value] of Object.entries(record)) {
+    // Skip Salesforce metadata
+    if (field === 'attributes') continue
+
+    // Never insert Id
+    if (field === 'Id') continue
+
+    // Rewrite lookup fields
+    if (field.endsWith('Id') && value && idMap[value]) {
+      transformed[field] = idMap[value]
+    } else {
+      transformed[field] = value
     }
   }
 
-  return clone
+  return transformed
 }

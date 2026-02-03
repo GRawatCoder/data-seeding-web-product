@@ -8,6 +8,7 @@ import { countRecords } from "../services/recordCount.service.js";
 import { seedObject } from "../services/seeding.engine.js";
 import { sendProgress } from "../routes/progress.routes.js";
 import { buildRecordGraph } from '../services/record.graph.builder.js'
+import { insertRecordsForObject } from '../services/insertRecordsForObject.js'
 
 export async function listObjects(req, res) {
   const { sandboxId } = req.params;
@@ -125,43 +126,95 @@ export async function dryRun(req, res) {
   const {
     sourceSandboxId,
     targetSandboxId,
-    objects,
+    objects: rootObjects,
     maxRecordsPerObject = 10,
-  } = req.body
+  } = req.body;
 
-  // 1️⃣ Build FULL record graph
-  const graphResult = await buildRecordGraph({
-    sandboxId: sourceSandboxId,
-    rootObjects: objects,
-    maxRecordsPerRoot: maxRecordsPerObject,
-  })
+  console.log("🟦 [DRY-RUN] Request received", {
+    sourceSandboxId,
+    targetSandboxId,
+    rootObjects,
+    maxRecordsPerObject,
+  });
 
-  const { recordsByObject, autoIncludedObjects } = graphResult
 
-  // 2️⃣ Count records
-  const recordCounts = {}
-  let totalRecords = 0
-
-  for (const obj of Object.keys(recordsByObject)) {
-    recordCounts[obj] = recordsByObject[obj].length
-    totalRecords += recordCounts[obj]
+  if (!sourceSandboxId || !targetSandboxId || !rootObjects?.length) {
+    return res.status(400).json({ error: "Invalid dry-run request" });
   }
 
-  // 3️⃣ Execution order (object-level, derived)
-  const executionOrder = Object.keys(recordsByObject)
+  // 1️⃣ Build FULL record graph (records + inclusion metadata)
+  const graphResult = await buildRecordGraph({
+    sandboxId: sourceSandboxId,
+    rootObjects,
+    maxRecordsPerRoot: maxRecordsPerObject,
+  });
+
+  const {
+    recordsByObject,
+    autoIncludedObjects, // array of object names
+    inclusionMap,        // { ObjectName: { via, reason } }
+  } = graphResult;
+
+  // 2️⃣ Count records
+  const recordCounts = {};
+  let totalRecords = 0;
+
+  for (const objectName of Object.keys(recordsByObject)) {
+    const count = recordsByObject[objectName].length;
+    recordCounts[objectName] = count;
+    totalRecords += count;
+  }
+
+  // 3️⃣ Object-level execution order (simple, deterministic)
+  // (True dependency order comes in Task B)
+  const executionOrder = Object.keys(recordsByObject);
+
+  // 4️⃣ Build auto-included explanation list
+  /*
+  const autoIncludedDetails = autoIncludedObjects.map((obj) => ({
+    object: obj,
+    includedVia: Array.isArray(inclusionMap[obj]?.via)
+      ? inclusionMap[obj].via
+      : inclusionMap[obj]?.via
+        ? [inclusionMap[obj].via]
+        : [],
+    reason: inclusionMap[obj]?.reason || "unknown",
+  }));
+  */
+ const autoIncludedDetails = autoIncludedObjects.map(item => ({
+  object: item.object,                 // string
+  includedVia: item.includedVia,        // array
+  reason: "lookup",
+  }));
+
+  console.log("🟦 [DRY-RUN] Response summary", {
+  totalObjects: executionOrder.length,
+  totalRecords,
+  autoIncludedObjects: autoIncludedDetails,
+});
+
+  console.log(
+  "🧪 [DRY-RUN] autoIncludedObjects payload",
+  JSON.stringify(autoIncludedDetails, null, 2)
+);
+
+
 
   res.json({
+    roots: rootObjects,
     executionOrder,
-    recordCounts,
-    autoIncludedObjects,
+    recordsByObject,
+    autoIncludedObjects: autoIncludedDetails,
     summary: {
       totalObjects: executionOrder.length,
       totalRecords,
     },
-  })
+  });
 }
 
 
+
+/*
 export async function executeSeeding(req, res) {
   const {
     sourceSandboxId,
@@ -211,3 +264,47 @@ export async function executeSeeding(req, res) {
 
   res.json({ status: "SUCCESS", executionOrder });
 }
+  */
+
+export async function executeSeeding(req, res) {
+  const {
+    sourceSandboxId,
+    targetSandboxId,
+    recordGraph,
+    executionOrder,
+  } = req.body
+
+  if (!recordGraph || !executionOrder) {
+    return res.status(400).json({ error: "Missing record graph" });
+  }
+  if (!getSandboxAuth(sourceSandboxId)) {
+    return res.status(400).json({ error: "Source sandbox not connected" });
+  }
+
+  if (!getSandboxAuth(targetSandboxId)) {
+    return res.status(400).json({ error: "Target sandbox not connected" });
+  }
+
+  const idMap = {}
+
+  const summary = {}
+
+  for (const objectName of executionOrder) {
+  const records = recordGraph[objectName] || []
+  if (!records.length) continue
+
+  const result = await insertRecordsForObject({
+    objectName,
+    records,
+    sourceSandboxId,
+    targetSandboxId,
+    idMap,          // ✅ shared map
+    emitProgress: sendProgress,
+  })
+
+  summary[objectName] = result
+}
+
+  res.json({ success: true, summary })
+}
+

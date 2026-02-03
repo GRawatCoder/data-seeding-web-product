@@ -12,6 +12,8 @@ export default function DataSeeding() {
   const [targetSandboxId, setTargetSandboxId] = useState(null);
   const [search, setSearch] = useState("");
   const [selectedObjects, setSelectedObjects] = useState([]);
+  const [autoIncludedObjects, setAutoIncludedObjects] = useState([]);
+
 
   const { data: sandboxes = [] } = useQuery({
     queryKey: ["sandboxes"],
@@ -30,6 +32,7 @@ export default function DataSeeding() {
   });
 
   function toggleObject(apiName) {
+    setAutoIncludedObjects([]);
     let next;
     if (selectedObjects.includes(apiName)) {
       next = selectedObjects.filter((o) => o !== apiName);
@@ -85,20 +88,36 @@ export default function DataSeeding() {
           />
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-auto border p-2 rounded">
-            {filteredObjects.map((obj) => (
-              <button
-                key={obj.name}
-                onClick={() => toggleObject(obj.name)}
-                className={`text-left px-2 py-1 rounded text-sm
-                  ${
-                    selectedObjects.includes(obj.name)
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 hover:bg-gray-200"
-                  }`}
-              >
-                {obj.name}
-              </button>
-            ))}
+            {filteredObjects.map((obj) => {
+              const isAutoIncluded = autoIncludedObjects.includes(obj.name);
+              const isSelected = selectedObjects.includes(obj.name);
+
+              return (
+                <button
+                  key={obj.name}
+                  disabled={isAutoIncluded}
+                  onClick={() => toggleObject(obj.name)}
+                  className={`text-left px-2 py-1 rounded text-sm
+        ${
+          isSelected
+            ? "bg-blue-600 text-white"
+            : isAutoIncluded
+              ? "bg-yellow-100 text-gray-500 cursor-not-allowed"
+              : "bg-gray-100 hover:bg-gray-200"
+        }`}
+                >
+                  <span className="flex justify-between items-center">
+                    {obj.name}
+
+                    {isAutoIncluded && (
+                      <span className="text-xs bg-yellow-200 text-yellow-800 px-1 rounded">
+                        🧠 auto
+                      </span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -154,6 +173,7 @@ export default function DataSeeding() {
           sourceSandboxId={sourceSandboxId}
           targetSandboxId={targetSandboxId}
           selectedObjects={selectedObjects}
+          onAutoIncludedChange={setAutoIncludedObjects}
         />
       )}
     </div>

@@ -8,9 +8,11 @@ export default function DryRunReport({
   sourceSandboxId,
   targetSandboxId,
   selectedObjects,
+  onAutoIncludedChange,
 }) {
   const [maxRecords, setMaxRecords] = useState(10);
   const [progress, setProgress] = useState({});
+  
 
   // -----------------------
   // Dry-Run (read-only)
@@ -27,13 +29,13 @@ export default function DryRunReport({
   });
 
   useEffect(() => {
-     console.log("[SSE] executeMutation.isPending =", executeMutation.isPending);
+   //  console.log("[SSE] executeMutation.isPending =", executeMutation.isPending);
     if (!executeMutation.isPending) return;
-    console.log("[SSE] Subscribing to progress");
+   // console.log("[SSE] Subscribing to progress");
     const es = new EventSource("http://localhost:4000/progress");
 
     es.onmessage = (event) => {
-        console.log("[SSE MESSAGE]", event.data);
+       // console.log("[SSE MESSAGE]", event.data);
       const data = JSON.parse(event.data);
       setProgress((prev) => ({
         ...prev,
@@ -46,18 +48,53 @@ export default function DryRunReport({
         console.log("[SSE] Unsubscribed/Close from progress");};
   }, [executeMutation.isPending]);
 
-  
+  useEffect(() => {
+  if (dryRunMutation.data) {
+    console.log("📥 [UI] Dry-run response", dryRunMutation.data);
+  }
+}, [dryRunMutation.data]);
+
+
+  /*
+  useEffect(() => {
+  if (dryRunMutation.data?.autoIncludedObjects) {
+    onAutoIncludedChange(
+      dryRunMutation.data.autoIncludedObjects.map(o => o.object)
+    );
+  }
+}, [dryRunMutation.data, onAutoIncludedChange]);
+*/
+
+const recordGraph = dryRunMutation.data?.recordsByObject ?? null;
+
+
+
+
 
   function handleDryRun() {
+    onAutoIncludedChange([]);
     //console.log("Starting dry-run for objects:", selectedObjects);
+    console.log("🖱️ [UI] Dry-run clicked", {
+      sourceSandboxId,
+      targetSandboxId,
+      selectedObjects,
+    });
     dryRunMutation.mutate({
       sourceSandboxId,
       targetSandboxId,
       objects: selectedObjects,
     });
+    
+
   }
 
   function handleExecute() {
+
+    if (!recordGraph) {
+      alert("Run dry-run first");
+      return;
+    }
+
     if (
       !window.confirm(
         "This will INSERT DATA into the target sandbox. Continue?"
@@ -70,10 +107,53 @@ export default function DryRunReport({
     executeMutation.mutate({
       sourceSandboxId,
       targetSandboxId,
-      objects: selectedObjects,
-      maxRecordsPerObject: maxRecords,
+      recordGraph,
+      executionOrder: dryRunMutation.data.executionOrder,
     });
   }
+
+  function normalizeIncludedVia(includedVia) {
+    if (!includedVia) return "unknown";
+
+    if (Array.isArray(includedVia)) {
+      return includedVia.join(", ");
+    }
+
+    if (typeof includedVia === "string") {
+      return includedVia;
+    }
+
+    if (typeof includedVia === "object") {
+      // handle accidental nested object
+      if (includedVia.object) return includedVia.object;
+      return JSON.stringify(includedVia);
+    }
+
+    return String(includedVia);
+  }
+
+  function safeText(value) {
+    if (!value) return "unknown";
+
+    if (typeof value === "string") return value;
+
+    if (Array.isArray(value)) return value.join(", ");
+
+    if (typeof value === "object") {
+      if (value.object) return value.object;
+      return JSON.stringify(value);
+    }
+
+    return String(value);
+  }
+
+const autoIncluded =
+  dryRunMutation.data?.autoIncludedObjects ?? [];
+
+if (autoIncluded.length > 0) {
+  console.log("🧠 [UI] Auto-included objects", autoIncluded);
+}
+
 
   return (
     <div className="border rounded p-4 bg-white space-y-4">
@@ -165,13 +245,42 @@ export default function DryRunReport({
         </>
       )}
 
+      {/* Auto-included objects explanation */}
+      {dryRunMutation.data?.autoIncludedObjects?.length > 0 && (        
+    //console.log("🧠 [UI] Auto-included objects", dryRunMutation.data?.autoIncludedObjects);
+
+  <div className="border rounded-md bg-yellow-50 p-3 text-sm">
+    <p className="font-medium mb-2">Auto-included objects</p>
+
+    <ul className="space-y-1">
+      {dryRunMutation.data.autoIncludedObjects.map((item, idx) => {
+        const objectText = safeText(item.object);
+        const viaText = safeText(item.includedVia);
+        const reasonText = safeText(item.reason);
+
+        return (
+          <li key={`${objectText}-${viaText}-${idx}`}>
+            🧠 <strong>{objectText}</strong>{" "}
+            <span className="text-gray-600">
+              included via <strong>{viaText}</strong> ({reasonText})
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+)}
+
+
       {executeMutation.isPending && (
         <div className="mt-4 space-y-2">
           {Object.entries(progress).map(([object, count]) => (
             <div key={object} className="text-sm">
               <div className="flex justify-between mb-1">
                 <span>{object}</span>
-                <span>{count} records</span>
+                <span>
+                  {count}/{maxRecords}
+                </span>
               </div>
 
               <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
@@ -188,13 +297,29 @@ export default function DryRunReport({
       )}
 
       {executeMutation.isSuccess && (
-        <p className="text-green-600 text-sm">Seeding completed successfully</p>
+        <div className="mt-4 p-3 bg-green-50 border rounded text-sm text-green-700">
+          ✅ Data seeding completed successfully
+        </div>
       )}
 
       {executeMutation.isError && (
         <p className="text-red-600 text-sm">
           Execution failed: {executeMutation.error.message}
         </p>
+      )}
+
+      {executeMutation.data?.summary && (
+        <div className="mt-4 text-sm">
+          <h4 className="font-medium mb-1">Execution Summary</h4>
+          {Object.entries(executeMutation.data.summary).map(([obj, stat]) => (
+            <div key={obj} className="mb-2">
+              <strong>{obj}</strong>: {stat.inserted}/{stat.attempted} inserted
+              {stat.failed > 0 && (
+                <span className="text-red-600"> ({stat.failed} failed)</span>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -25,7 +25,7 @@ export default function AdminSandboxes() {
     queryKey: QUERY_KEYS.SANDBOXES,
     queryFn: fetchSandboxes,
   });
-  console.log("Sandboxes from cache:", sandboxes);
+ // console.log("Sandboxes from cache:", sandboxes);
   // -----------------------
   // Health state per sandbox
   // -----------------------
