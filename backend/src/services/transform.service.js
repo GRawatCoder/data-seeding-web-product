@@ -1,25 +1,44 @@
-/**
- * Transform a source record into a target-safe record
- * - Rewrites lookup IDs using idMap
- * - Removes Salesforce system fields
- */
-export function transformRecord({ record, idMap }) {
-  const transformed = {}
+import { resolveField } from './resolver.registry.js'
+
+export async function transformRecord({
+  record,
+  idMap,
+  sourceSandboxId,
+  targetSandboxId,
+  objectName,
+}) {
+  const output = {}
 
   for (const [field, value] of Object.entries(record)) {
-    // Skip Salesforce metadata
-    if (field === 'attributes') continue
+    if (!value) continue
 
-    // Never insert Id
-    if (field === 'Id') continue
-
-    // Rewrite lookup fields
-    if (field.endsWith('Id') && value && idMap[value]) {
-      transformed[field] = idMap[value]
-    } else {
-      transformed[field] = value
+    // 1️⃣ Normal ID rewrite
+    if (field.endsWith('Id') && idMap[value]) {
+      output[field] = idMap[value]
+      continue
     }
+
+    // 2️⃣ Resolver-based mapping (RecordTypeId etc.)
+    if (field.endsWith('Id')) {
+      const resolved = await resolveField({
+        field,
+        value,
+        record,
+        objectName,
+        sourceSandboxId,
+        targetSandboxId,
+        idMap,
+      })
+
+      if (resolved) {
+        output[field] = resolved
+        continue
+      }
+    }
+
+    // 3️⃣ Passthrough
+    output[field] = value
   }
 
-  return transformed
+  return output
 }

@@ -9,6 +9,7 @@ import { seedObject } from "../services/seeding.engine.js";
 import { sendProgress } from "../routes/progress.routes.js";
 import { buildRecordGraph } from '../services/record.graph.builder.js'
 import { insertRecordsForObject } from '../services/insertRecordsForObject.js'
+import { executeWithDependencies } from '../services/executeWithDependencies.js'
 
 export async function listObjects(req, res) {
   const { sandboxId } = req.params;
@@ -285,26 +286,16 @@ export async function executeSeeding(req, res) {
     return res.status(400).json({ error: "Target sandbox not connected" });
   }
 
-  const idMap = {}
+  console.log('🚀 [EXECUTE] Starting dependency-aware execution')
 
-  const summary = {}
-
-  for (const objectName of executionOrder) {
-  const records = recordGraph[objectName] || []
-  if (!records.length) continue
-
-  const result = await insertRecordsForObject({
-    objectName,
-    records,
+  const result = await executeWithDependencies({
+    recordGraph,
+    executionOrder,
     sourceSandboxId,
     targetSandboxId,
-    idMap,          // ✅ shared map
-    emitProgress: sendProgress,
+    emitProgress: req.emitProgress, // SSE hook
   })
 
-  summary[objectName] = result
-}
-
-  res.json({ success: true, summary })
+  res.json(result)
 }
 
